@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+</head>
+<body>
+<h2 id="using-langil-class">Using Langil class</h2>
+<p>Langil is a C++ class that produces realisations of a Master Equation with the Gillespie algorithm or with Langevin dynamics. It uses the auxiliar class <code>reaction</code> defined in the header <code>langil.h</code>.</p>
+<p><code>HIVlangil.py</code> contains an example of usage of <code>langil</code>. The code is structured as follows:</p>
+<h3 id="lines1-65-headers-and-definition-of-variables.">lines(1-65) headers, and definition of variables.</h3>
+<p>Note that the dimension (number of species) is <code>DIM=4</code> in this case. And the species vectors will all of them consist of vector (x1,x2,x3,x4).</p>
+<h3 id="lines78-155-creation-of-the-stoichiometry-and-propensity-of-the-reactions">lines(78-155) creation of the stoichiometry and propensity of the reactions</h3>
+<p>For instance, the first reaction (Production of T) reads</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="co">// Production of T </span>
+vector&lt;<span class="dt">int</span>&gt; Tpro_r(){ <span class="kw">return</span> {<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>};};
+<span class="dt">double</span> Tpro(vector&lt;species&gt;&amp; x){
+<span class="kw">return</span> Omega*lambdaT;
+};</code></pre></div>
+<p>The stoichiometry contains the values of change of each species when the reaction channel fires, in the example case, only the first of the 4 species is increased by 1. Note that there is already a set order in the species.</p>
+<p>The second definition is the propensity, that returns the probability per unit of time of the reaction to occur.</p>
+<h3 id="lines157-168-command-line-call-of-hivlangil">lines(157-168) command line call of HIVlangil</h3>
+<p>In this case it follows</p>
+<p><code>HIVlangil file.in  file.out</code></p>
+<p>This is useful for the parallel calls from <code>pyHIVlangil.py</code></p>
+<h3 id="lines169-235-read-of-the-input-file">lines(169-235) read of the input file</h3>
+<p>The inpunt file is created from <code>pyHIVlangil.py</code>. The file <code>CLEN0.in</code> is one example, it can be modified by hand, but is highly recommended to automate this with <code>pyHIVlangil.py</code>.</p>
+<h3 id="line238-creation-of-instance-hiv-of-class-langil">line(238) creation of instance <code>HIV</code> of class <code>langil</code></h3>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">gillespie HIV(outputfilename,Omega,SEED); </code></pre></div>
+<p>Note that the constructor only requires the name of the outputfile, the value of the system volume <code>Omega</code> and the <code>SEED</code> of the RNG (SEED=-1 uses a random seed).</p>
+<h3 id="lines249-252-adding-species-to-hiv">lines(249-252) adding species to <code>HIV</code></h3>
+<p>Each species is added separately stating a string with its name, and its initial value as,</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">HIV.AddSpecies(<span class="st">&quot;T&quot;</span>,T0*Omega); <span class="co">// Careful with the order</span></code></pre></div>
+<p>Note that the species have to be added in the same order that the stated in the stoichiometry vector. This is something that has to be changed in the future</p>
+<h3 id="lines-258-269-adding-the-reactions-to-hiv">lines (258-269) adding the reactions to <code>HIV</code></h3>
+<p>Each reaction requires a string with the name of the reaction, the vector with the stoichiometries and the propensity function.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">HIV.Add_Reaction(<span class="st">&quot;T Production&quot;</span>,Tpro_r(),Tpro);</code></pre></div>
+<h3 id="lines-271-285-declaring-adiabadicity-in-reactions">lines (271-285) Declaring adiabadicity in reactions</h3>
+<p>Some reactions have a much faster dynamic than others. Such reactions can be considered that they are always in equilibrium with the rest. In Gillespie simulations they can be a problem since they fire much more often than others, without any change in the dynamics. For this reason, setting a reaction as adiabatic will remove the reaction from the propensity calculus and compute the changes that its mass action law approximation produces after a Gillespie step. A reaction can be set after the reactions is declared (as happens in pyHIVlangil.py)</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">HIV.Set_AdiabaticReaction(<span class="st">&quot;T Production&quot;</span>);</code></pre></div>
+<p>but could also be stated directly from the reaction declaration as</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">HIV.Add_Reaction(<span class="st">&quot;T Production&quot;</span>,Tpro_r(),Tpro,ADIABATIC);</code></pre></div>
+<h3 id="line-288-set-runtype">line (288) Set RunType</h3>
+<p>RunType is the integration scheme chosen. So far, there are only 3 which are:</p>
+<ul>
+<li><em>GILLESPIE=0</em> : Gillespies algorithm</li>
+<li><em>CLE=1</em> : Chemical Langevin Equation</li>
+<li><em>MACROSCOPIC=2</em> : Deterministic Mass Action law</li>
+</ul>
+<p>both can be indicated by the interger or by their macro name as:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">HIV.SetRunType(GILLEPIE,dt); </code></pre></div>
+<p>The argument <code>dt</code> has no effect on Gillespie integration. For Macroscopic simulations is the step time of the integration of the mass action law. Finally, in the CLE case, <code>dt</code> if <code>dt&gt;0</code> it is used as the time step for the CLE, while <code>dt&lt;0</code>, a time step time is computed so the typical advance distance in a integration step do not involve a change in the concentration of the species greater than |<code>dt</code>|.</p>
+<h3 id="line-289-set-writestate">line (289) Set WriteState</h3>
+<p>WriteState states how the data from the simulation should be stored,</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">HIV.SetWriteState(ffwrite,timelapse);</code></pre></div>
+<p>It takes two arguments. The options for <code>ffwrite</code> are:</p>
+<ul>
+<li><code>TIMESTEP = 0</code>, write the state of the system every <code>timelapse</code> amount of time</li>
+<li><code>ALL = 1</code>, write after each reaction (integration step) takes place</li>
+<li><code>NOWRITE = 2</code> nothing</li>
+<li><code>TIMESTEPMULT</code>, stores steps following a geometrical distribution, is very useful when the simulation can get very long and a set of events are expected to follow a exponential time distribution: The formula for the record times is: <span class="math inline"><em>T</em>(<em>i</em>)=<em>d</em><em>t</em> * (<em>t</em><em>i</em><em>m</em><em>e</em><em>l</em><em>a</em><em>p</em><em>s</em><em>e</em><sup><em>i</em></sup> − 1)</span></li>
+</ul>
+<h3 id="line-291-add-temporal-actions">line (291) Add Temporal actions</h3>
+<p>Temporal actions are events that can change the behaviour of the system when some condition is met. This functions will be called after each integration. In the current case, there is a time action defined together with the reactions in lines (151-155)</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="co">// Change of aL in time</span>
+<span class="dt">double</span> aLtime(<span class="dt">double</span> t){
+aL=aLs+aLC*(<span class="dv">1</span>-aLC2*cos(<span class="dv">2</span>*M_PI*t/aLT+M_PI));
+<span class="kw">return</span> aL;
+}</code></pre></div>
+<p>and is introduced in <code>HIV</code> in line (291) as,</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">HIV.Add_TimeAction(&amp;aLtime);</code></pre></div>
+<h3 id="line-293-run-the-integration">line (293) Run the integration</h3>
+<p>There are 3 ways to Run the integration, depending on the desired output</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">HIV.Run(totaltime)</code></pre></div>
+<p>Makes one single trajectory with a time length <code>totaltime</code></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">HIV.RunTimes(N,totaltime)</code></pre></div>
+<p>Makes <code>N</code> trajectories and stores the last point of each trajectory</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">HIV.RunTransition(initialstate, finalstate, 
+                  initialstatedist, finalstatedist, 
+                  N,totaltime);</code></pre></div>
+<p>Integrates <code>N</code> trajectories starting at <code>initialstate</code> that stop when <code>finalstate</code> is reached or when time reaches <code>totaltime</code>. The output is the time required to reach <code>finalstate</code> (Mean First Passage Time) for each trajectory and a flag (1 or 0) stating is the integration terminated by reaching <code>finalstate</code> (0) or <code>totaltime</code> (1).</p>
+<p><code>initialstate</code>, <code>finalstate</code>, <code>initialstatedist</code>, <code>finalstatedist</code>, are vectors in the species space. The trajectory finishes when it enters the parallelepiped defined by <code>finalstate</code>+<code>finalstatedist</code> and <code>finalstate</code>-<code>finalstatedist</code>.</p>
+<p>If the number of trajectories computed is <code>N</code>=1, then the whole trajectory is stored. The trajectory spans from the last time the trajectory left the initial parallelepided before reaching the final parallelepided.</p>
+</body>
+</html>

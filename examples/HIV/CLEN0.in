@@ -1,0 +1,65 @@
+# Control Parameters
+
+Omega 5000 # System Volume
+
+# Parameters of the model
+
+lambdaT 10000 // production and degradation of healthy cells
+deltaT 0.0166
+k 2.4e-08 // infection rate
+eps 0.85 // drug efficacy
+eta 0.001 // fraction of inections resulting in L
+
+deltaL 0.001 // death rate of L
+r 0.2 // L homeostasis speed
+Lmax 1.888 // homoeostatic carrying capacity
+
+aL 0.1 // rate of activation from latency (will depend on parameters bellow)
+aLs 0.1
+aLC 0.0 
+aLC2 0.0
+aLT 1.0 // parameters controlling aL in time
+
+adiabaticmethod 4 // number of stochastic reactions
+
+deltaTS 1.0; // death of active infected cells
+lambdaV 2000 // virus production and clearance rate 
+deltaV 23 
+
+# Initial and Final Conditions (in concentration units)
+
+T0 600000
+L0 0.01
+TS0 0.01
+V0 1
+
+Tf 599999
+Lf 0.934778
+TSf 0.115067
+Vf 10
+
+# pass jump transition recording
+
+DT0 60000
+DL0 0.09
+DTS0 0.01
+DV0 1
+DTf 60000
+DLf 0.09
+DTSf 0.01
+DVf 1
+
+# Parameters for the integration
+
+ffwrite 0 # kind of recording protocol
+#                0 TIMESTEP: record every timelapse time span
+#                1 ALL: record after every reaction(integration step) takes place
+#                2 NOWRITE:
+#                3 TIMESTEPMULT: record every time following formula T(i)=dt*(timelapse^i-1) 
+#                              note that is required timelapse>1.0
+
+timelapse 1 # time between recordingds if fwrite==0
+totaltime 100.0
+dt  0.001 #Integration time step for Gillespie and Deterministic && is dx for CLE
+runtype 1 Run_Type {GILLESPIE=0,CLE=1,MACROSCOPIC=2}
+SEED -1

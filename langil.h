@@ -60,20 +60,6 @@
 
 using namespace std;
 
-//   struct reaction{ //Structure containing the info of each reaction. Each reaction added 
-// through the method Add_Reaction(reaction) will be stored as an element in a vector
-// by langil class.
-//	string name; // name of the reaction
-//	double (*propensity)(); // function of the propensity of the current reaction
-//	vector<int> stoichiometry; // stoichiometry of each reaction
-//	double prop; // actual value of the propensity (updated through propensity function)
-//	reaction(string aname,double (*aprop)(),vector<int> asto, double apropx)
-//		:name(aname), propensity(aprop),stoichiometry(asto),prop(apropx) {}
-//};
-// Since the initialization does not require the value prop, an initializator omiting it
-// should be defined (it is not urgent though, any value in the initialization will give the
-// same result). 
-
 
 struct StructDivisionState{
 	double time;

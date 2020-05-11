@@ -12,13 +12,16 @@
 
 ## Compilation
 There is a Makefile provided to compile the code, to compile the `langil` class run
-``` make
+```
+make
 ```
 To compile the code and the examples provided run
-``` make examples
+```
+make examples
 ```
 To clean all the object files run
-``` make clean
+```
+make clean
 ```
 
 ## Examples

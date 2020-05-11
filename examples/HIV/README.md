@@ -1,8 +1,11 @@
-## Using Langil class
+## Example of `langil` class in a cell infection model 
 
-Langil is a C++ class that produces realisations of a Master Equation with the Gillespie algorithm or with Langevin dynamics. It uses the auxiliar class `reaction` defined in the header `langil.h`.
+The main code is contained in the file [HIVlangil.cpp] using the `langil` class. The Python code [pyHIVlangil.py] creates automatically the input files and runs `HIVlangil` through the function `callmain()`. Alternatively, it can be run manually with the provided input file `CLENO.in` as
+```
+HIVlangil CLENO.in CLENO.out
+```
 
-`HIVlangil.cpp` contains an example of usage of `langil`. The code is structured as follows:
+The following is a description of the file `HIVlangil.cpp` 
 
 ###lines(1-65) headers, and definition of variables. 
 Note that the dimension (number of species) is `DIM=4` in this case. And the species vectors will all of them consist of vectors (x1,x2,x3,x4).

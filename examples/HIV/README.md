@@ -1,16 +1,16 @@
 ## Example of `langil` class in a cell infection model 
 
-The main code is contained in the file [HIVlangil.cpp] using the `langil` class. The Python code [pyHIVlangil.py] creates automatically the input files and runs `HIVlangil` through the function `callmain()`. Alternatively, it can be run manually with the provided input file `CLENO.in` as
+The main code is contained in the file [HIVlangil.cpp](HIVlangil.cpp) using the `langil` class. The Python code [pyHIVlangil.py](pyHIVlangil.py) creates automatically the input files and runs `HIVlangil` through the function `callmain()`. Alternatively, it can be run manually with the provided input file `CLENO.in` as
 ```
 HIVlangil CLENO.in CLENO.out
 ```
 
 The following is a description of the file `HIVlangil.cpp` 
 
-###lines(1-65) headers, and definition of variables. 
+### lines(1-65) headers, and definition of variables. 
 Note that the dimension (number of species) is `DIM=4` in this case. And the species vectors will all of them consist of vectors (x1,x2,x3,x4) containing the values for the variables T,TL,TS,V.
 
-###lines(78-155) creation of the stoichiometry and propensity of the reactions
+### lines(78-155) creation of the stoichiometry and propensity of the reactions
 
 The first reaction (Production of T) reads
 
@@ -26,17 +26,17 @@ The first line defines the stoichiometry of the reaction, in the example case, o
 
 The second line defines the propensity of the reaction, that returns the probability per unit of time of the reaction to occur given the rest of species of the system.  
 
-###lines(157-168) command line call of HIVlangil
+### lines(157-168) command line call of HIVlangil
 
 This defines the order of the files when HIVlangil is called in the terminal
 
 `HIVlangil inputfile.in  outputfile.out`
 
-###lines(169-235) read of the input file
+### lines(169-235) read of the input file
 
 The input file is created from `pyHIVlangil.py`. The file `CLEN0.in` is one example of input file, it can be modified by hand, but is highly recommended to automate this with `pyHIVlangil.py`.
 
-###line(238) creation of instance `HIV` of class `langil` 
+### line(238) creation of instance `HIV` of class `langil` 
 
 ```c++
 gillespie HIV(outputfilename,Omega,SEED); 

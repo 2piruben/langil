@@ -7,7 +7,7 @@
 * [langil.cpp](langil.cpp) Definition of the `langil` class containing the main integration routines. Particular description of its usage can be found for the [HIV example](examples/HIV)
 * [langil.h](langil.h) Headers for the `langil` class and definition of the `reaction` class defining the different types of reactions that can be used by `langil`
 * [species.h](species.h) Definition of the `species` class that contains the different types of the molecular species used by `langil`
-* [cell_cycle.h](cell_cycle.h) Definition of the `cell_cycle` class used to incorporate cell cycle properties (cell cycle phases of different stochastic duration including material division at bipartition). Examples using it can be found in the [CellCycleVariability example](examples/]CellCycleVariability)
+* [cell_cycle.h](cell_cycle.h) Definition of the `cell_cycle` class used to incorporate cell cycle properties (cell cycle phases of different stochastic duration including material division at bipartition). Examples using it can be found in the [CellCycleVariability example](examples/CellCycleVariability)
 * [examples](examples) Folder containing different projects using the `langil` class
 
 ## Compilation

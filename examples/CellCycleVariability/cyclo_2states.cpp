@@ -14,11 +14,8 @@
 #include <sstream>
 #include <vector>
 
-#define DIM 3 //// Dimension, number of reactants (species)
-
 using namespace std;
 
-	const int dim=DIM;
 	// Main control parameters
 	double Omega;// Volume of the system, relates concentrations of mRNA and protein to actual numbers
 

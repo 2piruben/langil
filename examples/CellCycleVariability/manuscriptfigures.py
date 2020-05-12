@@ -3,7 +3,6 @@ import seaborn as sns
 from scipy.stats import poisson,nbinom,binom,skew,kurtosis
 import matplotlib.pyplot as plt
 import runcyclo as gill
-import erlanggenerating as erl
 from scipy.special import factorial 
 from scipy.optimize import minimize
 from matplotlib.ticker import ScalarFormatter, NullFormatter
@@ -208,6 +207,25 @@ def getFig23(panel='a',figure=2,loaddata=False):
 
         etanum_corrected = etanum*(1+0.15*(icondition-1))
 
+        if (condition['mRNAgeo']== -1 and figure==2 and panel in ['a','b']): # mean in constitutive expression in a trajectory
+            mstartheo = meanstartrajErlang(w,1,etatheo,Delta)
+            mtheo = meantrajErlang(w,1,etatheo,Delta)
+            R = (mtheo-mstartheo)/mtheo
+            Ndet = 400
+            k = condition['N']
+            meanstartheo = [bt.meantrajErlang(condition['mRNAgeo'],condition['nhat']*etatheo_i,
+                                            Ndet,etatheo_i,int(condition['W']/condition['N']*Ndet),
+                                            Ndet) for etatheo_i in etatheo]
+            print(condition['nhat'],etatheo,w,condition['W'],Delta)
+            meantheo = [bt.meantrajErlang(condition['mRNAgeo'],condition['nhat']*etatheo_i,
+                                           k,etatheo_i,condition['W'],condition['N']) for etatheo_i in etatheo]
+            meantheo = np.array(meantheo)
+            meanstartheo = np.array(meanstartheo)
+            meanR = (meantheo-meanstartheo)/meantheo
+            print('meanstarteo',meanstartheo)
+            print('meantheo',meantheo)
+            print('meanR',meanR)
+
         if (condition['mRNAgeo']== -1 and figure==2 and panel in ['d','e','f']): # variance in constitutive expression in a trajectory
             mstartheo = meanstartrajErlang(w,1,etatheo,Delta)
             mtheo = meantrajErlang(w,1,etatheo,Delta)
@@ -260,9 +278,9 @@ def getFig23(panel='a',figure=2,loaddata=False):
                                            mode = 'constitutive') for etatheo_i in etatheo]
             meantheo = np.array(meantheo)
             meanR = (meantheo-meanstartheo)/meantheo
-            print('varstarteo',meanstartheo)
-            print('vartheo',meantheo)
-            print('varR',meanR)
+            print('meanstarteo',meanstartheo)
+            print('meantheo',meantheo)
+            print('meanR',meanR)
 
         elif (condition['mRNAgeo']== -1 and figure==3 and panel in ['d','e','f']): # variance constitutive expression in a population
 
@@ -341,6 +359,7 @@ def getFig23(panel='a',figure=2,loaddata=False):
                     pardict["T"] = tau
                     pardict["cellphaserates"] = np.ones(condition['N'])/(tau/condition['N'])
                     print("Calculating condition eta:{}, condition:{}".format(eta,icondition))
+                    print("Simulations with stochastic cell cycle....")
 
                     marray = np.ones(0)         
                     mvararray = np.ones(0)          
@@ -396,6 +415,7 @@ def getFig23(panel='a',figure=2,loaddata=False):
 
                     mstararray = np.ones(0)
                     mstarvararray = np.ones(0)
+                    print("Simulations with deterministic cell cycle....")
                     for repeat in tqdm(range(repeats)):
                         if figure in [2]:
                             simulationtime = 600*max(1/pardict['k1'],1/pardict['k0'],tau)

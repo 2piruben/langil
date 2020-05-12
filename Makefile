@@ -5,12 +5,12 @@ LFLAGS = -lm -lgsl -lgslcblas -L$(GSL_LIBRARY)
 GPP = g++
 
 OBJECT_HIV = examples/HIV/HIVlangil.o
-OBJECT_CYCLE = examples/CellCycleVariability/cyclo_2states_pop.o
-OBJECT_CYCLE_POP = examples/CellCycleVariability/cyclo_2states.o
+OBJECT_CYCLE = examples/CellCycleVariability/cyclo_2states.o
+OBJECT_CYCLE_POP = examples/CellCycleVariability/cyclo_2states_pop.o
 
 SRC_HIV = examples/HIV/HIVlangil.cpp
-SRC_CYCLE = examples/CellCycleVariability/cyclo_2states_pop.cpp
-SRC_CYCLE_POP = examples/CellCycleVariability/cyclo_2states.cpp
+SRC_CYCLE = examples/CellCycleVariability/cyclo_2states.cpp
+SRC_CYCLE_POP = examples/CellCycleVariability/cyclo_2states_pop.cpp
 
 
 #############
@@ -23,7 +23,7 @@ langil.o: langil.cpp langil.h
 
 #########################
 #The target all, includes also the codes for the different examples
-all: HIVlangil cyclo_2states cyclo_2states_pop
+examples: HIVlangil cyclo_2states cyclo_2states_pop
 
 ########
 HIVlangil: $(OBJECT_HIV) langil.o

@@ -28,7 +28,7 @@ The second line defines the propensity of the reaction, that returns the probabi
 
 ### lines(157-168) command line call of HIVlangil
 
-This defines the order of the files when HIVlangil is called in the terminal
+This defines the order of the input and output files when HIVlangil is called in the terminal
 
 `HIVlangil inputfile.in  outputfile.out`
 

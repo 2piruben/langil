@@ -2,7 +2,7 @@
 
 'langil' is a C++ code that integrates stochastic trajectories of different interacting molecular species using the Gillespie algorithm or a continuous stochastic differential equation description.
 
-## Description of files
+## Files
 
 * [langil.cpp](integration_bs.py) Definition of the `langil` class containing the main integration routines. Particular description of its usage can be found for the [HIV example](examples/HIV)
 * [langil.h](langil.f) Headers for the `langil` class and definition of the `reaction` class defining the different types of reactions that can be used by `langil`
@@ -27,7 +27,7 @@ make clean
 ## Examples
 
 * [HIV](examples/HIV) Example for a simple model of HIV cell population infection. It contains a detailed description of the use of the class `langil` in the [HIV example](examples/HIV/HIV.html)
-* [Cell Cycle Variability](examples/CellCycleVariability) Code used in the paper *R. Perez-Carrasco, C. Beentjes, R. Grima, Effects of cell cycle variability on lineage and population measurements of mRNA abundance. BioRxiv (2019)* to simulate mRNA abundance in cells with a stochastic cell cycle duration
+* [Cell Cycle Variability](examples/CellCycleVariability) Code used in *R. Perez-Carrasco, C. Beentjes, R. Grima, Effects of cell cycle variability on lineage and population measurements of mRNA abundance. BioRxiv (2019)* to simulate mRNA abundance in cells with a stochastic cell cycle duration
 
 
 ### Prerequisites

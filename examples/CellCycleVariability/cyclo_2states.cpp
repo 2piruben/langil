@@ -4,22 +4,9 @@
 // GILLESPIE SIMULATION CLASS OF CYCLOSTATIONARY PARTITION
 //
 //							R Perez-Carrasco
-//							Created: 4 May '19
+//							Created: 4 July '19
 //////////////////////////////////////////////////////////////////////
 //
-// The system contains 8 species that states the possible 4 states of each of the two genes Olig2 and Irx3
-// Each of the species are the following:
-//
-// promO: promoter for Olig2 gene, can be active or inactive i.e (can take 0 or 1). If we consider diploidity
-//        it can take larger values
-// nascO: number of nascent Olig2 genes, they are treated separatedly to mature mRNA since they cannot be transcribed, 
-//        can be related to FISH measurements, and can have deterministic lifetimes 
-// mrnaO: mature Olig2 mRNAs
-// protO: number of Olig2 proteins
-//
-// similarly we can define promI, nacI, mrnaI, protI
-//
-// They will be ordered as (0: promO, 1:nascO, 2:mrnaO, 3:protO ,4: promI, 5:nascI, 6:mrnaI, 7:protI
 
 #include "langil.h"
 #include <iostream>
@@ -37,11 +24,9 @@ using namespace std;
 
 	double k0,k1; // rates of pproduction/death mRNA
 	double k2,k3; // rates of production/death protein
-	double T; // cell cycle time
-	double r1,r2; // rates to transit between
+	double T; // average cell cycle time duration
 
-
-	int stochasticcycle; // are the cell pahses stochastic?
+	int stochasticcycle; // flag for cell cycle stochasticity
 	int phasenum; // number of phases per cell cycle
 	int presynnum;  // number of cell cycle phases before gene doubling
 	vector<double> phaserates; // rates of the different cell cycle phases
@@ -52,7 +37,7 @@ using namespace std;
 
 	// Model solving parameters
 
-	int ffwrite; // kind of recording protocol (defined in .in or .h)
+	int ffwrite; // kind of output
 	double timelapse; // timestep for recording
 	double totaltime;
 	double runtimes; 
@@ -63,20 +48,12 @@ using namespace std;
 	////////////////////
 	// DEFINITION OF PROPENSITIES AND STOICHIOMETRIES OF THE DIFFERENT REACTIONS
 	//////////////////////////////////////////////////	
-	// This methods are used in the constructor of the class to define the reaction structures
-	// both of them are declared as functions dependending on global parameters tha	t can be changed at runtime
-
-	// For speed reasons x[0], x[1] and x[2] are assigned numerally, it would be interesting to access them by
-	// their names, nevertheless it may cost computationally, it is worth to check it in the future creating a function
-	// void assign (A,B, ) or a check function that checks that x[0].name==N etc.
-
-	// The variables in the propensity functions are given in number of molecules (X=x*Omega)
-
-	// x[0] will be mRNA and p[0] protein
+	// These methods are used in the constructor of the class to define the reactions
 
 	// x[0] mRNA
 	// x[1] protein
 	// x[2] cell state
+	// cell state ractions are managed directly with the class cell_cycle.h
 
 	// mRNA production
 	vector<int> m_pro_r(){ return {mRNAgeo,0,0};};
@@ -85,7 +62,7 @@ using namespace std;
   			return k0;
   		} 
   		else{
-  			return 2*k0; 
+  			return 2*k0; // post-replication
   		}
 	};
 
@@ -95,17 +72,19 @@ using namespace std;
   		return (x[0]->n)*k1;
 	};
 
-	// Deactivation of Olig2 promoter
+	// protein production
 	vector<int> p_pro_r(){ return {0,1,0};};
 	double p_pro(v_species& x){
   		return x[0]->n*k2;
 	};
 
-	// Deactivation of Irx3 promoter
+	// protein degradation
 	vector<int> p_deg_r(){ return {0,-1,0};};
 	double p_deg(v_species& x){
   		return x[1]->n*k3;
 	};
+
+//////////////////////////// MAIN /////////////////////////////////////////////////
 
 	int main(int argc, char* argv[]){
 
@@ -131,11 +110,6 @@ using namespace std;
 		string stringline;
 		string par_name;
 		string par_value;
-
-		// initi random variable
-		gsl_rng * rngz; // allocator for the rng generator
-		rngz= gsl_rng_alloc (gsl_rng_mt19937);
-		gsl_rng_set (rngz,::time(NULL)*getpid());
 
 		while(getline(inputfile,stringline)){
 			if (stringline[0]!='#' && stringline!=""){// If not a comment or blank line
@@ -175,34 +149,26 @@ using namespace std;
 		
 		inputfile.close();
 
-		////// CREATING GILLESPIE INSTANCE
+		////// CREATING LANGIL INSTANCE
 		langil cyclo(outputfilename,Omega,SEED); // No argumenTS for random seed
 
-	    ////// SETTING OF INTIIAL CONDITIONS
+	    ////// ADDING SSPECIES 
 
-		// Order of species as rest of the program (T,L,TS,V)
 		cyclo.AddSpecies("mRNA",m0); // Careful with the order
 		cyclo.AddSpecies("prot",p0); // Careful with the order
 		cyclo.AddCellCycleSpecies();
 		for (auto k: phaserates){
-			cyclo.addCellPhase(1.0/k,stochasticcycle); // CONSTANT_PHASE OR EXPONENTIAL_PHASE
+			cyclo.addCellPhase(1.0/k,stochasticcycle); // stochasticcycle can be CONSTANT_PHASE OR EXPONENTIAL_PHASE
 		}
 		cyclo.PrintSummarySpecies();
 
-		/////////////////////////
-		// DEFINING REACTIONS 
-		////////////////////////////////////////////////
-		// Here the different reactions are created, the propensity functions
-		// are dfined as global functions in the top of the file
+		///// ADDING REACTIONS
 
-		// add last argument ADIABATIC to make the reaction resilient to noise
-
-
-		if (mRNAgeo < 0){ // Normal constitutive case
-			mRNAgeo = 1;
+		if (mRNAgeo < 0){ // constitutive case
+			mRNAgeo = 1; // number of mRNAs produced per reaction
 			cyclo.Add_Reaction("mRNA production phase",m_pro_r(),m_pro_0);
 			}
-		else{
+		else{ //bursty
 			cyclo.Add_Reaction("mRNA production phase",m_pro_r(),m_pro_0);
 			cyclo.Set_GeometricReaction("mRNA production phase");
 		}
@@ -211,14 +177,11 @@ using namespace std;
 		cyclo.Add_Reaction("protein production",p_pro_r(),p_pro);
 		cyclo.Add_Reaction("protein degradation",p_deg_r(),p_deg);
 
-
+		//// DEFINING RUN TYPE AND OUTPUT
 		cyclo.SetRunType(runtype,dt); 
 		cyclo.SetWriteState(ffwrite,timelapse);
 
-
-	
-//		cyclo.Add_TimeAction(&aLtime);
-
+		/// RUN
 		if (runtimes == 1){
 			cyclo.Run(totaltime);
 		}

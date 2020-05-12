@@ -7,19 +7,6 @@
 //							Created: 4 May '19
 //////////////////////////////////////////////////////////////////////
 //
-// The system contains 8 species that states the possible 4 states of each of the two genes Olig2 and Irx3
-// Each of the species are the following:
-//
-// promO: promoter for Olig2 gene, can be active or inactive i.e (can take 0 or 1). If we consider diploidity
-//        it can take larger values
-// nascO: number of nascent Olig2 genes, they are treated separatedly to mature mRNA since they cannot be transcribed, 
-//        can be related to FISH measurements, and can have deterministic lifetimes 
-// mrnaO: mature Olig2 mRNAs
-// protO: number of Olig2 proteins
-//
-// similarly we can define promI, nacI, mrnaI, protI
-//
-// They will be ordered as (0: promO, 1:nascO, 2:mrnaO, 3:protO ,4: promI, 5:nascI, 6:mrnaI, 7:protI
 
 #include "langil.h"
 #include <iostream>
@@ -37,11 +24,9 @@ using namespace std;
 
 	double k0,k1; // rates of pproduction/death mRNA
 	double k2,k3; // rates of production/death protein
-	double T; // cell cycle time
-	double r1,r2; // rates to transit between
+	double T; // average cell cycle time duration
 
-
-	int stochasticcycle; // are the cell pahses stochastic?
+	int stochasticcycle; // flag for cell cycle stochasticity
 	int phasenum; // number of phases per cell cycle
 	int presynnum;  // number of cell cycle phases before gene doubling
 	vector<double> phaserates; // rates of the different cell cycle phases
@@ -53,7 +38,7 @@ using namespace std;
 
 	// Model solving parameters
 
-	int ffwrite; // kind of recording protocol (defined in .in or .h)
+	int ffwrite; // kind of output
 	double timelapse; // timestep for recording
 	double fathertime; // 
 	double totaltime;
@@ -65,20 +50,12 @@ using namespace std;
 	////////////////////
 	// DEFINITION OF PROPENSITIES AND STOICHIOMETRIES OF THE DIFFERENT REACTIONS
 	//////////////////////////////////////////////////	
-	// This methods are used in the constructor of the class to define the reaction structures
-	// both of them are declared as functions dependending on global parameters tha	t can be changed at runtime
-
-	// For speed reasons x[0], x[1] and x[2] are assigned numerally, it would be interesting to access them by
-	// their names, nevertheless it may cost computationally, it is worth to check it in the future creating a function
-	// void assign (A,B, ) or a check function that checks that x[0].name==N etc.
-
-	// The variables in the propensity functions are given in number of molecules (X=x*Omega)
-
-	// x[0] will be mRNA and p[0] protein
-
+	// These methods are used in the constructor of the class to define the reactions
+	
 	// x[0] mRNA
 	// x[1] protein
 	// x[2] cell state
+	// cell state ractions are managed directly with the class cell_cycle.h
 
 	// mRNA production
 	vector<int> m_pro_r(){ return {mRNAgeo,0,0};};
@@ -87,7 +64,7 @@ using namespace std;
   			return k0;
   		} 
   		else{
-  			return 2*k0; 
+  			return 2*k0;  // post-replication
   		}
 	};
 
@@ -97,17 +74,19 @@ using namespace std;
   		return (x[0]->n)*k1;
 	};
 
-	// Deactivation of Olig2 promoter
+	// protein production
 	vector<int> p_pro_r(){ return {0,1,0};};
 	double p_pro(v_species& x){
   		return x[0]->n*k2;
 	};
 
-	// Deactivation of Irx3 promoter
+	// protein degradation
 	vector<int> p_deg_r(){ return {0,-1,0};};
 	double p_deg(v_species& x){
   		return x[1]->n*k3;
 	};
+
+//////////////////////////// MAIN /////////////////////////////////////////////////
 
 	int main(int argc, char* argv[]){
 
@@ -133,11 +112,6 @@ using namespace std;
 		string stringline;
 		string par_name;
 		string par_value;
-
-		// initi random variable
-		gsl_rng * rngz; // allocator for the rng generator
-		rngz= gsl_rng_alloc (gsl_rng_mt19937);
-		gsl_rng_set (rngz,::time(NULL)*getpid());
 
 		while(getline(inputfile,stringline)){
 			if (stringline[0]!='#' && stringline!=""){// If not a comment or blank line
@@ -177,33 +151,26 @@ using namespace std;
 		
 		inputfile.close();
 
-		////// CREATING GILLESPIE INSTANCE
+		////// CREATING LANGIL INSTANCE
 		langil cyclo(outputfilename,Omega,SEED); // No argumenTS for random seed
 
-	    ////// SETTING OF INTIIAL CONDITIONS
+	    ////// ADDING SSPECIES 
 
-		// Order of species as rest of the program (T,L,TS,V)
 		cyclo.AddSpecies("mRNA",m0); // Careful with the order
 		cyclo.AddSpecies("prot",p0); // Careful with the order
 		cyclo.AddCellCycleSpecies();
 		for (auto k: phaserates){
-			cyclo.addCellPhase(1.0/k,stochasticcycle); // CONSTANT_PHASE OR EXPONENTIAL_PHASE
+			cyclo.addCellPhase(1.0/k,stochasticcycle); // // stochasticcycle can be CONSTANT_PHASE OR EXPONENTIAL_PHASE
 		}
 		cyclo.PrintSummarySpecies();
 
-		/////////////////////////
-		// DEFINING REACTIONS 
-		////////////////////////////////////////////////
-		// Here the different reactions are created, the propensity functions
-		// are dfined as global functions in the top of the file
+		///// ADDING REACTIONS
 
-		// add last argument ADIABATIC to make the reaction resilient to noise
-
-		if (mRNAgeo < 0){ // Normal constitutive case
-			mRNAgeo = 1;
+		if (mRNAgeo < 0){ // constitutive case
+			mRNAgeo = 1; // number of mRNAs produced per reaction
 			cyclo.Add_Reaction("mRNA production phase",m_pro_r(),m_pro_0);
 			}
-		else{
+		else{ // bursty
 			cyclo.Add_Reaction("mRNA production phase",m_pro_r(),m_pro_0);
 			cyclo.Set_GeometricReaction("mRNA production phase");
 		}
@@ -212,20 +179,15 @@ using namespace std;
 		cyclo.Add_Reaction("protein production",p_pro_r(),p_pro);
 		cyclo.Add_Reaction("protein degradation",p_deg_r(),p_deg);
 
-
+		//// DEFINING RUN TYPE AND OUTPUT
 		cyclo.SetRunType(runtype,dt); 
 		cyclo.SetWriteState(ffwrite,timelapse);
 
 
+		/// CREATING STORAGE TO TRACK DIVIDING POPULATION
 		cyclo.Set_StoreDivisionTimes();
-
-	
-//		cyclo.Add_TimeAction(&aLtime);
-		vector<StructDivisionState> last_divisions; // divisions of the last Run
-		vector<StructDivisionState> queue_divisions; // queue of new cells to simulate
-		// In queue divisions the time is the global time of the population whilst in last_divisions is local to the parent time
-		// StructDivisionState current_cell = {time : 0, species0before: 0, species1before:0, species0after : m0,species1after :0}; // cell evaluated at each loop
-		// StructDivisionState sister_cell = {time : 0, species0before : 0, species1before:0, species0after: 0, species1after: 0}; // first cell 
+		vector<StructDivisionState> last_divisions; // divisions of the last trajectory
+		vector<StructDivisionState> queue_divisions; // queue of new cells to simulate from previous trajectory
 		StructDivisionState current_cell = {.time = 0, .species0before = 0, .species1before = 0, .species0after = m0, .species1after = 0}; // cell evaluated at each loop
 		StructDivisionState sister_cell = {.time = 0, .species0before = 0, .species1before = 0, .species0after = 0, .species1after = 0}; // first cell 
 		queue_divisions.push_back(current_cell);
@@ -233,65 +195,30 @@ using namespace std;
 		vector<double> phasesvec; // vector with the population of phases at end of run
 		int counter_divisions = 0;
 
-		gsl_rng * rng; // allocator for the rng generator
-		rng= gsl_rng_alloc (gsl_rng_mt19937);
-		gsl_rng_set (rng,::time(NULL)*getpid());
-
-
-
-		while( (queue_divisions.empty() == false)){
+		while( (queue_divisions.empty() == false)){ // keep dividing as long as there are cells younger than the final time
 			counter_divisions ++;
-
-			//cout<<'\n'<<"Simulating cell "<<counter_divisions<<'\n';
 			// Selecting the next cell to simulate
 			current_cell = queue_divisions.back();
 			fathertime = current_cell.time;
-			cyclo.SetState("mRNA", current_cell.species0after); //Set Initial conditions
-			//cyclo.SetDivisionHistory(current_cell.species0before,current_cell.species0after);
-			// cyclo.SetState("prot", current_cell.species0after); //Set Initial conditions
-			//Setting Initial conditions
-			cyclo.SetState("cell_cycle", 0); //Set Initial conditions
+			cyclo.SetState("mRNA", current_cell.species0after); //Set Initial mRNA from mother cell
+			cyclo.SetState("cell_cycle", 0); // Initiate cell cycle
 			cyclo.SetTime(0);
 			cyclo.Reset_HistoryDivision();
-			// cout<<"rest of integration: "<<totaltime-current_cell.time<<'\n';
-			// Run simulation and store the outputs of division and final state
-			cyclo.Run(totaltime-current_cell.time, false);
+			cyclo.Run(totaltime-current_cell.time, false); // Run a trajectory until final time and store untracked daughters
 			last_divisions = cyclo.Get_HistoryDivision();
 			queue_divisions.pop_back();
 			mRNAvec.push_back(cyclo.GetState("mRNA"));
 			phasesvec.push_back(cyclo.GetState("cell_phase"));
-			// cout<<"Initial state "<<current_cell.species0after<<'\n';
-			// cout<<"Final state "<<cyclo.GetState("mRNA")<<'\n';
-			// cout<<"Results in the following divisions: "<<'\n';
 
 			for (std::vector<StructDivisionState>::const_iterator i = last_divisions.begin(); i != last_divisions.end(); ++i){
-				// cout<<"time_local:  "<<(*i).time<<" time_global "<<((*i).time + current_cell.time)<<" mRNAdaughter1 "<<((*i).species0after)<<" mRNAdaughter2 "<<((*i).species0before - (*i).species0after)<<'\n';
+				// loop to add each untracked sister to teh queue of trajectories to simulate
 				sister_cell.time = (*i).time + fathertime;
 				sister_cell.species0before = (*i).species0before; // not really necessary
-				//sister_cell.species0after = gsl_ran_binomial(rng, 0.5, (*i).species0before); // not really necessary
 				sister_cell.species0after = (*i).species0before-(*i).species0after; // remaining cellular content is passed to sister
-				//sister_cell.species0after = 34; // remaining cellular content is passed to sister
 				// Update the queue of divisions
-				//cout<<"Resulting in divisions with mRNAS: "<<(*i).species0before-(*i).species0after <<' ';
 				queue_divisions.push_back(sister_cell);
-				//cout<<(*i).species0before<<'\n';
-				//cout<<'\n';
-				//cout<<"Temporary size of queue: "<<queue_divisions.size()<<"\n\n\n";
 			}
-			//cout<<"Current size of queue: "<<queue_divisions.size()<<"\n\n\n";
 		}
-
-		// cout<<"Finished population with mRNA population:";
-		// for (std::vector<double>::const_iterator i = mRNAvec.begin(); i != mRNAvec.end(); ++i){
-				// cout<<*i<<' ';
-		// }
-		// cout<<'\n';
-		// cout<<"Finished population with phases:";
-		// for (std::vector<double>::const_iterator i = phasesvec.begin(); i != phasesvec.end(); ++i){
-				// cout<<*i<<' ';
-		// }
-		// cout<<'\n';				
-
 	}
 	
 

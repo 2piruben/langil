@@ -36,6 +36,12 @@ pardict = {
 ###### The theoretical expressions are calculated with the implementation 
 # in this script or with the fastest code of burstrans.py
 # the stochast simulations are managed with gillespie_cyclo.py
+#
+# Figures of the paper can be created using the functions
+# getfigure23()
+# getFigure4()
+# getFigure3a()
+# getFig1()
 
 #################################################################################
 #
@@ -226,7 +232,7 @@ def getFig23(panel='a',figure=2,loaddata=False):
             print('meantheo',meantheo)
             print('meanR',meanR)
 
-        if (condition['mRNAgeo']== -1 and figure==2 and panel in ['d','e','f']): # variance in constitutive expression in a trajectory
+        elif (condition['mRNAgeo']== -1 and figure==2 and panel in ['d','e','f']): # variance in constitutive expression in a trajectory
             mstartheo = meanstartrajErlang(w,1,etatheo,Delta)
             mtheo = meantrajErlang(w,1,etatheo,Delta)
             R = (mtheo-mstartheo)/mtheo
@@ -263,6 +269,25 @@ def getFig23(panel='a',figure=2,loaddata=False):
             print('varstarteo',varstartheo)
             print('vartheo',vartheo)
             print('varR',varR)
+
+
+        elif (condition['mRNAgeo'] > 0 and figure==2 and panel in ['a','b']): # variance in bursty expression in a trajectory
+            mstartheo = meanstartrajErlang(w,1,etatheo,Delta)
+            mtheo = meantrajErlang(w,1,etatheo,Delta)
+            R = (mtheo-mstartheo)/mtheo
+            k = condition['N']
+            Ndet = 400
+            meanstartheo = [bt.meantrajErlang(condition['mRNAgeo'],condition['nhat']*etatheo_i,
+                                            Ndet,etatheo_i,int(condition['W']/condition['N']*Ndet),Ndet) for etatheo_i in etatheo]
+            meanstartheo = np.array(meanstartheo)
+            print(condition['nhat'],etatheo,w,condition['W'],Delta)
+            meantheo = [bt.meantrajErlang(condition['mRNAgeo'],condition['nhat']*etatheo_i,
+                                           k,etatheo_i,condition['W'],condition['N']) for etatheo_i in etatheo]
+            meantheo = np.array(meantheo)
+            meanR = (meantheo-meanstartheo)/meantheo
+            print('meanstarteo',meanstartheo)
+            print('meantheo',meantheo)
+            print('meanR',meanR)
 
         elif (condition['mRNAgeo']== -1 and figure==3  and panel in ['a','b']): # mean constitutive expression in a population
             
@@ -676,7 +701,7 @@ def getFig1():
     etas = [0.1,1,10]
     lims = [[0,20],[0,100],[0,150]]
 
-    ax_trajs = [0,0]
+    ax_trajs = [0,0,0]
     for ieta,eta in enumerate(etas):
         N = Ns[ieta]
         pardict['phasenumber'] = N
@@ -686,7 +711,7 @@ def getFig1():
         pardict['m0'] = int(meantrajErlang(0.75,nhat,eta,1/N))
         pardict['presynthesis'] = Ws[ieta] ## the actual condition is n<presynthesis
 
-        totaltime = 30
+        totaltime = 5
 
         # Simulations with stochastic cell cycle
         pardict['ffwrite'] = 1
@@ -775,6 +800,10 @@ def getFig4(mode = 'lineage', burst = -1, output = 'grid', loaddata = False, N =
     #   N = condition['N']
 
     if loaddata is False:
+        if burst>0:
+            modeburst = 'bursty'
+        else:
+            modeburst = 'constitutive'
         if (output == 'grid'):
             f = open('grid_mode_{}_burst_{}_N.dat'.format(mode,modeburst,N),'w+') # File to write data
             gridsizex = 100
@@ -808,12 +837,6 @@ def getFig4(mode = 'lineage', burst = -1, output = 'grid', loaddata = False, N =
                     N = conditionlist[inh]['N']
                     burst = conditionlist[inh]['burst']
                     mode = conditionlist[inh]['mode']
-
-
-                if burst>0:
-                    modeburst = 'bursty'
-                else:
-                    modeburst = 'constitutive'
 
 
                 W=int(N/2)

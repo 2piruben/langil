@@ -195,11 +195,11 @@
 
 		// propensity sum calculation
 		for(vector<reaction>::iterator it = r.begin(); it != r.end(); ++it) {
-			// cout<<(it->GetName())<<' '<<(it->IsAdiabatic())<<"\n";
-			// cout.flush();
-			if (it->IsNotAdiabatic() && it->IsNotDetermTime() ){
-			 // cout<<"Propensity of "<<it->GetName()<<':'<<it->GetPropensity()<<'\n';
+			 // cout<<(it->GetName())<<' '<<(it->IsAdiabatic())<<"\n";
 			 // cout.flush();
+			if (it->IsNotAdiabatic() && it->IsNotDetermTime() ){
+			  // cout<<"Propensity of "<<it->GetName()<<':'<<it->GetPropensity()<<'\n';
+			  // cout.flush();
 				totalprop+= it->GetPropensity();
 			}
 			else if (it->IsDetermTime() && it->GetPropensity()>0){// if Propensity is negative in a deterministic reaction, means that it has no elements
@@ -221,7 +221,7 @@
 		// cout<<"Next cell phase event: "<<cell.getTimeForNextCellPhase()<<'\n';
 
 		//vector<double> vectordivision;
-		if ( (1.0/cell.getTimeForNextCellPhase()>1.0/nexttau) && (1.0/cell.getTimeForNextCellPhase() > 1.0/detprop) ){
+		if (cellcyclespeciesidx >= 0 && (1.0/cell.getTimeForNextCellPhase()>1.0/nexttau) && (1.0/cell.getTimeForNextCellPhase() > 1.0/detprop) ){
 		// if the next event is a cell cycle phase event
 			nexttau = cell.getTimeForNextCellPhase();
 			if(nexttau>timelimit){
@@ -275,7 +275,9 @@
 				for(unsigned int i=0;i<x.size();i++){ // update new variables
 					x[i]->React((*nextstoichiometry)[i]);
 				}
-				cell.updateCelltime(nexttau);		
+				if(cellcyclespeciesidx >=0){
+				cell.updateCelltime(nexttau);
+				}		
 		}
 
 		else{ // if the next time is a stochastic time, then follow on with the 
@@ -301,7 +303,7 @@
 					}
 				}
 			}
-			// cout<<"Next reaction is "<< nextreaction->GetName()<<'\n';
+			// cout<<"Next reaction is "<< nextreaction->GetName()<<"\n\n";
 			// Actualization of the state of the system
 			nextstoichiometry=(nextreaction->GetStoichiometry());	
 			if (nextreaction->IsNotGeometric()){
@@ -310,7 +312,7 @@
 				}
 			}
 			else { // if it is geometric
-				// cout<<"A geoetric reaction is happening..."<<'\n';
+				// cout<<"A geometric reaction is happening..."<<'\n';
 				for(unsigned int i=0;i<x.size();i++){
 					// The probability of fail for a burst size b is 1/(1+b)
 					if ((*nextstoichiometry)[i] > 0){
@@ -451,8 +453,8 @@
 			cout<<"Running Integration algorithm...";
 			cout<<"Total time:"<<T<<"  Initial time:"<<time<<'\n';
 			cout<<"Initial State:"<<x[0]->n<<' '<<x[1]->n<<' '<<'\n';
-			cout<<"ffwrite: "<<fwrite<<'\n';
-			cell.PrintState();
+			cout<<"ffwrite : "<<fwrite<<'\n';
+			if (cellcyclespeciesidx>=0){cell.PrintState();};
 		}
 
 		while(time<T){
@@ -503,6 +505,13 @@
 		}
 
 		for(int Ncount=0;Ncount<N;Ncount++){
+			nextrectime=0;
+			time=-1; // negative times are used to encode actions that only occur at the start of a simulation
+			// such as chosen parameters in random way
+			// this is done this way to avoid comparison with time == 0
+			RunTimeAction();
+
+			time=0;
 			while(time<T){		
 				RunTimeAction();
 				time+=(this->*MakeStep)(T-time);
@@ -527,9 +536,8 @@
 		return time;
 	}
 
-	double langil::RunTransition(v_species& initstate, v_species& endstate, 
-									v_species& initradius,v_species& endradius,
-									int loopcount,double maxT){ // loopcount=1 also records the transition trajectory
+	double langil::RunTransition(bool (*inside_init)(v_species&), bool (*inside_end)(v_species&), 
+							     int loopcount,double maxT){ // loopcount=1 also records the transition trajectory
 
 		clock_t start,end;
 
@@ -540,6 +548,11 @@
 		trajfile.precision(10);
 		double nextrecordingtime = 0; 
 	
+
+		v_species xinit; // saving initial position to restart the system after each transition	
+		for (auto &s: x){
+			xinit.push_back(p_species(s->clone())); // xtran.push_back(x)
+		}
 		// The following two could be joined in a compact way, but I will not complicate the code
 		vector< v_species > xtran; // transition trajectory is a vector of species vectors
 		vector<double> ttran; // transition trajecotry times		
@@ -547,11 +560,13 @@
 		trajfile<<"# Simulation time     Computation time (seconds)\n";
 		trajfile.flush();
 
+
+
 		for(int i=0;i<loopcount;i++){
 			start=::clock();
 			time=0;
 			for(uint i=0;i<x.size();i++){//  x = xinitstate
-				*x[i] = *initstate[i];
+				*x[i] = *xinit[i];
 			}	
 			nearfromend=false;
 			nearfrombeginning=true;
@@ -568,7 +583,7 @@
 				time+=(this->*MakeStep)(maxT-time);
 	 			nearfrombeginning=true;
 				for(uint d=0;d<x.size();d++){
-					if( nearfrombeginning && fabs(x[d]->n-initstate[d]->n)<initradius[d]->n){
+					if( nearfrombeginning && inside_init(x) ) {
 						nearfrombeginning=true;
 					}
 					else{ nearfrombeginning=false;}
@@ -599,7 +614,7 @@
 
 				nearfromend=true; // let's assume is close to the end and check if its true
 				for(uint d=0;d<x.size();d++){
-					if(nearfromend && fabs(x[d]->n-endstate[d]->n)<endradius[d]->n){
+					if(nearfromend && inside_end(x)){
 						nearfromend=true;
 					}
 					else nearfromend=false;
@@ -749,7 +764,9 @@ void langil::Add_TimeAction(double (*actionfunc)(double)){
 void langil::RunTimeAction(){
 // if in a future several signals are desired, this should be changed by a 
 // signal arrays
+		// cout<<"Entering RunTimeAction at time: "<< time<<'\n';
 		for (auto f: actionfuncvec){
+			// cout<<"Running function inside\n";
 			signal=(*f)(time);
 		}
 	}

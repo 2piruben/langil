@@ -102,9 +102,7 @@ class langil{
 		double MacroAdiabaticStep(double dtt); //  Make an Euler step if the Adiabaitc species		
 		double Run(double time, bool verbose=true); // React until reach time time
 		double RunTimes(int N,double time, bool verbose=true); // Run Run() N times
-		double RunTransition(v_species& initstate, v_species& endstate,
-			v_species& initradius, v_species& endradius,
-			 int loops, double maxT); // Run transition between two points, if loops=1 it also records the transition trajectory
+		double RunTransition(bool (*prop_f)(v_species&), bool (*prop_g)(v_species&), int loops, double maxT); // Run transition between two points, if loops=1 it also records the transition trajectory
 		void WriteState(); // Write state in file 
 		void WriteTempState(); // Write state in file 
 		void WritePrevrecState(); // Write previous recorded state in file 

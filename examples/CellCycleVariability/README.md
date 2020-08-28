@@ -1,6 +1,6 @@
 # Analysis of mRNA distributions in a proliferating cell population
 
-Analysis done in *R. Perez-Carrasco, C. Beentjes, R. Grima, Effects of cell cycle variability on lineage and population measurements of mRNA abundance. JRS Interface (2020)* to study the distribution of mRNA in a cell analyzing effects of cell cycle duration variability in a transcription model that takes into account bipartition, DNA replication, and a structured cell cycle.
+Analysis done in *R. Perez-Carrasco, C. Beentjes, R. Grima, Effects of cell cycle variability on lineage and population measurements of mRNA abundance. JRS Interface 17:168 (2020)* to study the distribution of mRNA in a cell analyzing effects of cell cycle duration variability in a transcription model that takes into account bipartition, DNA replication, and a structured cell cycle.
 
 ## Files
 

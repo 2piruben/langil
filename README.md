@@ -27,7 +27,7 @@ make clean
 ## Examples
 
 * [HIV](examples/HIV) Example for a simple model of HIV cell population infection. It contains a detailed description of the use of the `langil` class
-* [Cell Cycle Variability](examples/CellCycleVariability) Code used in *R. Perez-Carrasco, C. Beentjes, R. Grima, Effects of cell cycle variability on lineage and population measurements of mRNA abundance. BioRxiv (2019)* to simulate mRNA abundance in cells with a stochastic cell cycle duration
+* [Cell Cycle Variability](examples/CellCycleVariability) Code used in *R. Perez-Carrasco, C. Beentjes, R. Grima, Effects of cell cycle variability on lineage and population measurements of mRNA abundance. JRS Interface 17:168 (2020)* to simulate mRNA abundance in cells with a stochastic cell cycle duration
 
 
 ### Prerequisites
